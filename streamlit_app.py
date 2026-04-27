@@ -2,27 +2,24 @@ import streamlit as st
 import joblib
 import numpy as np
 
-# تحميل الموديل فقط
-try:
-    model = joblib.load('mlp_doubled_neurons_model.joblib')
-    st.success("Model loaded successfully!")
-except:
-    st.error("Model file not found.")
+# تحميل الموديل
+model = joblib.load('mlp_doubled_neurons_model.joblib')
 
 st.title("Electricity Cost Prediction ⚡")
+st.success("Model loaded successfully!")
 
-input_val = st.number_input("Enter your input value:", value=0.0)
+input_val = st.number_input("Enter your consumption value:", value=0.0)
 
 if st.button("Predict"):
     try:
-        # هندخل الرقم للموديل مباشرة ونشوف هيقول إيه
-        # لو الموديل محتاج أكتر من رقم، الكود ده هيجرب يدخله كـ array
-        input_data = np.array([[input_val]])
+        # الموديل محتاج 11 قيمة، هنبعت له الرقم بتاعك ومعاه 10 أصفار كمثال
+        # عشان يقبل الـ Shape بتاع الداتا
+        input_data = np.zeros((1, 11)) 
+        input_data[0, 0] = input_val # بنحط الرقم بتاعك في أول خانة
         
-        # التوقع
         prediction = model.predict(input_data)
         
-        st.write(f"### Prediction Result: {prediction[0]}")
+        # عرض النتيجة
+        st.write(f"### Predicted Electricity Cost: {prediction[0]:.2f}")
     except Exception as e:
-        st.error(f"Prediction error: {e}")
-        st.info("نصيحة: الموديل ده غالباً محتاج أكتر من معلومة عشان يتوقع صح.")
+        st.error(f"Error: {e}")
