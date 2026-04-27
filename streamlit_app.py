@@ -12,14 +12,15 @@ input_val = st.number_input("Enter your consumption value:", value=0.0)
 
 if st.button("Predict"):
     try:
-        # الموديل محتاج 11 قيمة، هنبعت له الرقم بتاعك ومعاه 10 أصفار كمثال
-        # عشان يقبل الـ Shape بتاع الداتا
-        input_data = np.zeros((1, 11)) 
-        input_data[0, 0] = input_val # بنحط الرقم بتاعك في أول خانة
+        # الموديل طلع محتاج 10 مدخلات بالظبط
+        input_data = np.zeros((1, 10)) 
+        input_data[0, 0] = input_val
         
         prediction = model.predict(input_data)
         
         # عرض النتيجة
-        st.write(f"### Predicted Electricity Cost: {prediction[0]:.2f}")
+        st.write(f"### Predicted Electricity Cost: {prediction[0][0]:.2f}")
     except Exception as e:
-        st.error(f"Error: {e}")
+        # لو لسه فيه مشكلة في العدد، الكود ده هيقولنا العدد الصح كام
+        st.error(f"Try once more, it's almost there!")
+        st.info(f"Technical detail: {e}")
