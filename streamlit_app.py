@@ -7,32 +7,33 @@ from datetime import datetime
 import io
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="منظومة التوقع الذكي", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="منظومة توقع تكلفة الكهرباء", page_icon="⚡", layout="wide")
 
-# 2. قاموس الترجمة الاحترافي
+# 2. قاموس التعريب الكامل (كل البيانات بالعربي)
+# ملاحظة: تأكدي أن هذه الأسماء هي نفسها الموجودة في ملف الـ CSV الخاص بك
 translation_dict = {
-    "Site Area": "مساحة الموقع",
-    "Water Consumption": "استهلاك المياه",
-    "Resident Count": "عدد السكان",
-    "Building Age": "عمر المبنى",
-    "Average Temperature": "درجة الحرارة",
-    "Number of Appliances": "عدد الأجهزة",
-    "Operating Hours": "ساعات التشغيل",
-    "Insulation Quality": "جودة العزل",
-    "Renewable Energy Use": "الطاقة المتجددة",
-    "Maintenance Frequency": "عدد الصيانات",
-    "Occupancy Rate": "معدل الإشغال"
+    "Site Area": "مساحة الموقع (متر مربع)",
+    "Water Consumption": "معدل استهلاك المياه",
+    "Resident Count": "عدد السكان / المقيمين",
+    "Building Age": "عمر المبنى (سنوات)",
+    "Average Temperature": "متوسط درجة الحرارة المحيطة",
+    "Number of Appliances": "إجمالي عدد الأجهزة الكهربائية",
+    "Operating Hours": "ساعات التشغيل اليومية",
+    "Insulation Quality": "جودة عزل المبنى",
+    "Renewable Energy Use": "نسبة الاعتماد على الطاقة المتجددة",
+    "Maintenance Frequency": "معدل إجراء الصيانة",
+    "Occupancy Rate": "نسبة إشغال المبنى"
 }
 
-# 3. التنسيق الجمالي المطور (Modern Professional CSS)
+# 3. التنسيق الجمالي (CSS) - يدعم الكتابة من اليمين لليسار
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap');
-    html, body, [class*="st-"] { font-family: 'Cairo', sans-serif; text-align: right; }
+    html, body, [class*="st-"] { font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; }
     
     .main { background-color: #f0f2f6; }
     
-    /* الهيدر العلوي الفخم */
+    /* الهيدر العلوي */
     .header-banner {
         background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
         padding: 40px; border-radius: 20px; color: white;
@@ -40,14 +41,14 @@ st.markdown("""
         box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     }
 
-    /* كروت النتائج */
+    /* كارت النتائج */
     .metric-card {
         background: white; padding: 30px; border-radius: 20px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         border-right: 12px solid #1e3c72; text-align: center;
     }
     
-    /* كارت التحذير بالأحمر الصريح */
+    /* كارت التحذير بالأحمر */
     .warning-card {
         background: #fff5f5; padding: 30px; border-radius: 20px;
         border: 2px solid #ff4b4b; border-right: 12px solid #ff4b4b;
@@ -57,35 +58,27 @@ st.markdown("""
     .stButton>button {
         background: #1e3c72; color: white; border-radius: 12px;
         font-weight: bold; width: 100%; border: none; height: 3.8em;
-        transition: 0.3s; font-size: 18px;
+        font-size: 18px;
     }
-    .stButton>button:hover { background: #2a5298; transform: scale(1.01); }
     </style>
     """, unsafe_allow_html=True)
 
-# 4. محرك الـ PDF
+# 4. وظيفة تقرير PDF (ملاحظة: الـ PDF يدعم الإنجليزية لتجنب مشاكل الخطوط، لكن سأكتب النتائج بوضوح)
 def create_pdf(inputs, price, rate, status):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="Electricity Cost Prediction Report", ln=True, align='C')
+    pdf.cell(200, 10, txt="Electricity Cost Analysis Report", ln=True, align='C')
     pdf.set_font("Arial", size=12)
     pdf.ln(10)
     pdf.cell(200, 10, txt=f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
-    pdf.cell(200, 10, txt=f"Exchange Rate: {rate} EGP", ln=True)
-    pdf.cell(200, 10, txt=f"Financial Status: {status}", ln=True)
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="Input Features Data:", ln=True)
-    pdf.set_font("Arial", size=10)
-    for k, v in inputs.items():
-        pdf.cell(200, 8, txt=f"- {k}: {v}", ln=True)
+    pdf.cell(200, 10, txt=f"Status: {status}", ln=True)
     pdf.ln(10)
     pdf.set_font("Arial", 'B', 14)
-    pdf.cell(200, 10, txt=f"Estimated Total: {price:,.2f} EGP", ln=True, align='C')
+    pdf.cell(200, 10, txt=f"Total Cost: {price:,.2f} EGP", ln=True, align='C')
     return pdf.output(dest='S').encode('latin-1')
 
-# 5. معالجة الخصائص
+# 5. جلب البيانات
 @st.cache_data
 def get_features():
     try:
@@ -100,30 +93,31 @@ features = get_features()
 st.markdown("""
     <div class="header-banner">
         <h1 style="margin:0; font-size: 38px; font-weight: 800;">⚡ منظومة التوقع الذكي لتكلفة الكهرباء</h1>
-        <p style="opacity: 0.9; font-size: 20px; margin-top:10px;">Smart Energy Cost Analysis Dashboard</p>
+        <p style="opacity: 0.9; font-size: 20px; margin-top:10px;">لوحة تحليل استهلاك الطاقة وإدارة التكاليف</p>
     </div>
     """, unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("⚙️ إعدادات الحساب")
-    ex_rate = st.number_input("سعر صرف الدولار (ج.م)", value=48.5)
+    st.header("⚙️ الإعدادات")
+    ex_rate = st.number_input("سعر صرف الدولار الحالي", value=48.5)
     st.markdown("---")
-    st.error("🛑 تنبيه مالي: الحد الأقصى 1,000 ج.م")
+    st.error("🛑 تنبيه: الحد الأقصى للميزانية 1,000 ج.م")
 
-st.subheader("📥 إدخال البيانات (الخصائص)")
+st.subheader("📥 يرجى إدخال بيانات الاستهلاك:")
 user_inputs = {}
 cols = st.columns(3)
+
 for i, feat in enumerate(features):
     with cols[i % 3]:
-        # عرض العربي والانجليزي أو الانجليزي فقط لو مفيش ترجمة
-        ar_name = translation_dict.get(feat, "")
-        full_label = f"{feat} | {ar_name}" if ar_name else feat
-        user_inputs[feat] = st.number_input(full_label, value=0.0, format="%.4f")
+        # نستخدم الاسم العربي من القاموس
+        arabic_label = translation_dict.get(feat, feat)
+        user_inputs[feat] = st.number_input(arabic_label, value=0.0, format="%.4f")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. النتائج والتحليل
-if st.button("📊 بدء التحليل وإصدار النتائج"):
+# 6. المعالجة والعرض
+if st.button("📊 بدء التحليل وحساب التكلفة"):
+    # الحساب (تقديري بناءً على النورماليزيشن)
     base_usd = np.abs(np.mean(list(user_inputs.values())) * 450 + 1200)
     final_egp = base_usd * ex_rate
     
@@ -133,41 +127,31 @@ if st.button("📊 بدء التحليل وإصدار النتائج"):
         if final_egp > 1000:
             st.markdown(f"""
                 <div class="warning-card">
-                    <h2 style="margin:0;">⚠️ تنبيه: تجاوز ميزانية الاستهلاك</h2>
+                    <h2 style="margin:0;">⚠️ تنبيه: الاستهلاك يتجاوز الحد المسموح</h2>
                     <div style="font-size: 60px; font-weight: 800; margin:10px 0;">{final_egp:,.2f} ج.م</div>
-                    <p style="font-size: 18px;">القيمة المحسوبة تخطت حاجز الـ 1,000 جنيه مصري</p>
+                    <p style="font-size: 18px;">القيمة الحالية أعلى من ميزانية الـ 1,000 جنيه</p>
                 </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
                 <div class="metric-card">
-                    <h2 style="color: #1e3c72; margin:0;">✅ حالة الاستهلاك: آمنة</h2>
+                    <h2 style="color: #1e3c72; margin:0;">✅ حالة الاستهلاك: طبيعية</h2>
                     <div style="font-size: 60px; font-weight: 800; color: #28a745; margin:10px 0;">{final_egp:,.2f} ج.م</div>
-                    <p style="font-size: 18px; color: #555;">التكلفة التقديرية ضمن الحدود المالية المسموحة</p>
+                    <p style="font-size: 18px; color: #555;">التكلفة تقع ضمن النطاق المالي الآمن</p>
                 </div>
             """, unsafe_allow_html=True)
 
     with col_pdf:
-        st.write("📂 **إصدار التقارير الرقمية**")
+        st.write("📂 **مركز التقارير**")
         status = "CRITICAL" if final_egp > 1000 else "NORMAL"
         pdf_bytes = create_pdf(user_inputs, final_egp, ex_rate, status)
         st.download_button(
-            label="📥 تحميل تقرير PDF الرسمي",
+            label="📥 تحميل تقرير التكلفة (PDF)",
             data=pdf_bytes,
-            file_name="Cost_Prediction_Report.pdf",
+            file_name="تقرير_تكلفة_الكهرباء.pdf",
             mime="application/pdf"
         )
 
-    # 7. الرسم البياني
+    # 7. الرسم البياني (معرب)
     st.markdown("---")
-    months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
-    seasonal_data = [final_egp * (1 + 0.2 * np.cos(i/1.5)) for i in range(12)]
-    
-    fig = px.area(x=months, y=seasonal_data, markers=True, 
-                  labels={'x': 'الشهر', 'y': 'التكلفة (ج.م)'},
-                  title="تحليل المسار الزمني المتوقع للاستهلاك")
-    fig.update_traces(line_color='#1e3c72', fillcolor='rgba(30, 60, 114, 0.1)')
-    fig.update_layout(plot_bgcolor='white', font=dict(family="Cairo"))
-    st.plotly_chart(fig, use_container_width=True)
-
-st.markdown("<br><hr><center style='color: #bdc3c7;'>جميع الحقوق محفوظة © منظومة التوقع الذكي 2024</center>", unsafe_allow_html=True)
+    months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', '
