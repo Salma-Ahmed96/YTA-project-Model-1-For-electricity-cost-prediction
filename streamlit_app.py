@@ -1,51 +1,54 @@
 import streamlit as st
-import joblib
-import numpy as np
+import pandas as pd
+import io
 
-# إعدادات الصفحة (بتخلي شكل الموقع أحلى)
-st.set_page_config(page_title="توقع فاتورة الكهرباء", page_icon="⚡")
+# إعداد الصفحة لتكون واسعة
+st.set_page_config(page_title="Data Properties Explorer", layout="wide")
 
-# تحميل الموديل
+st.title("🔍 خصائص وتحليل بيانات الكهرباء")
+
+# 1. تحميل الملف
 try:
-    model = joblib.load('mlp_doubled_neurons_model.joblib')
-    model_loaded = True
-except:
-    model_loaded = False
-
-# العنوان الرئيسي
-st.title(" توقع فاتورة الكهرباء⚡")
-st.markdown("---")
-
-if model_loaded:
-    st.success("✅")
+    df = pd.read_csv('electricity_cost_dataset_after_normalization (1).csv')
     
-    # وصف بسيط
-    st.write("أدخل كمية الاستهلاك الشهرية بالكيلو وات لمعرفة التكلفة التقديرية للفاتورة.")
+    # صفوف لعرض المعلومات بشكل منظم
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("عدد الأعمدة (Features)", df.shape[1])
+    with col2:
+        st.metric("عدد السجلات (Rows)", df.shape[0])
+    with col3:
+        st.metric("القيم المفقودة", df.isnull().sum().sum())
 
-    # خانة إدخال الاستهلاك
-    consumption = st.number_input("كمية الاستهلاك (kWh):", min_value=0.0, step=1.0, value=100.0)
+    st.markdown("---")
 
-    # زرار التوقع
-    if st.button("احسب التكلفة"):
-        try:
-            # تجهيز البيانات للموديل (10 مدخلات)
-            input_data = np.zeros((1, 10))
-            input_data[0, 0] = consumption
-            
-            # التوقع
-            prediction = model.predict(input_data)
-            
-            # عرض النتيجة بشكل مميز
-            st.markdown("### النتيجة المتوقعة:")
-            st.info(f"تكلفة الفاتورة التقديرية هي: **{prediction[0][0]:.2f}** جنيه")
-            
-            st.warning("⚠️ ملاحظة: هذه القيمة تقريبية بناءً على البيانات المتوفرة للموديل.")
-            
-        except Exception as e:
-            st.error("حدث خطأ أثناء الحساب، يرجى المحاولة مرة أخرى.")
-else:
-    st.error("❌ فشل في تحميل ملف الموديل. تأكد من وجود الملف على GitHub.")
+    # 2. عرض أسماء الأعمدة وأنواعها (Data Types)
+    st.subheader("1️⃣ أسماء الأعمدة ونوع البيانات")
+    # لتحويل مخرجات df.info() لنص يمكن عرضه في Streamlit
+    buffer = io.StringIO()
+    df.info(buf=buffer)
+    st.text(buffer.getvalue())
 
-# تذييل الصفحة
-st.markdown("---")
-st.caption("تم التطوير بواسطة سلمى - مشروع تعلم الآلة 2026")
+    st.markdown("---")
+
+    # 3. الإحصاءات الوصفية (Statistical Summary)
+    st.subheader("2️⃣ الملخص الإحصائي (الوصف)")
+    st.write("هذا الجدول يوضح (المتوسط الحسابي، الانحراف المعياري، أقل وأكبر قيمة) لكل Feature:")
+    st.dataframe(df.describe())
+
+    st.markdown("---")
+
+    # 4. فحص القيم الفريدة (Unique Values)
+    st.subheader("3️⃣ فحص التكرار والقيم الفريدة")
+    selected_col = st.selectbox("اختار عمود لعرض عدد القيم الفريدة فيه:", df.columns)
+    st.write(f"عدد القيم الفريدة في {selected_col} هو: {df[selected_col].nunique()}")
+    
+    st.markdown("---")
+
+    # 5. عرض عينة من الداتا الحقيقية
+    st.subheader("4️⃣ عرض عينة من البيانات (أول 10 صفوف)")
+    st.table(df.head(10))
+
+except FileNotFoundError:
+    st.error("❌ لم يتم العثور على ملف CSV. تأكدي من تسميته بشكل صحيح ووضعه بجانب ملف الكود.")
